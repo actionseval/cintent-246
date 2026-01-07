@@ -1,0 +1,64 @@
+name: Laia CI
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   push:
+#     branches: [master]
+#     paths-ignore: ['README.md']
+#   pull_request:
+#   schedule:
+#     # at 07:00 on Sunday
+#     - cron: '0 7 * * SUN'
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  # CINTENT >> REMOVE_COMMIT
+  # pre-commit:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: "3.9"
+  #     - name: Run pre-commit
+  #       run: |
+  #         pip install pre-commit
+  #         pre-commit run --all-files
+
+  pytest:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # CINTENT >> REMOVE_MATRIX
+        # python: ["3.8", "3.9", "3.10"]
+        python: ["3.10"]
+    steps:
+    - uses: actions/checkout@v4
+
+    # CINTENT >> INSERT_CINTENT
+    - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install requirements
+      run: pip install .[test]
+
+    - name: Run pytest
+      run: pytest --cov=laia tests
+
+    # CINTENT >> REMOVE_UPLOADS
+    # - uses: codecov/codecov-action@v3
+    #   # upload coverage only for main job
+    #   if: ${{ matrix.python == '3.8' }}
+
+    # CINTENT >> INSERT_CINTENT
+    - name: Upload CIntent Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ env.CINTENT_ARTIFACT_NAME }}
+        path: ${{ env.CINTENT_LOGS }}
